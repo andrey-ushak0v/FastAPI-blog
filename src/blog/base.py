@@ -8,8 +8,16 @@ engine = create_engine(
 )
 
 
-session = sessionmaker(
+Session = sessionmaker(
     engine,
     autocommit=False,
     autoflush=False,
 )
+
+def get_session() -> Session:
+    """управляет сессиями"""
+    session = Session()
+    try:
+        yield session
+    finally:
+        session.close()

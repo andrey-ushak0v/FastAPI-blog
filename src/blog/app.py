@@ -1,7 +1,11 @@
 from fastapi import FastAPI
 
-app = FastAPI()
+from api import router
 
-@app.get('/')
-def home():
-    return {"mess":"hola"}
+app = FastAPI()
+app.include_router(router)
+
+
+
+
+
