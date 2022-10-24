@@ -1,5 +1,8 @@
 fastapi
 pydantic
-uvicorn-0.18.3
-python-dotenv-0.21.0
-sqlalchemy-1.4.41
+uvicorn
+python-dotenv
+sqlalchemy
+python-jose
+passlib[bcrypt]
+python-multipart

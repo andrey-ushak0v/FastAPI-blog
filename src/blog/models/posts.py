@@ -10,19 +10,23 @@ class PostKind(str, Enum):
     HUMOR = 'humor'
     TUTORIAL = 'tutorial'
 
+
 class PostBase(BaseModel):
     date: date
     text: str
     kind: PostKind
 
+
 class Post(PostBase):
     id: int
-    
+
     class Config:
         orm_mode = True
 
+
 class PostCreate(PostBase):
     pass
+
 
 class Post_update(PostBase):
     pass

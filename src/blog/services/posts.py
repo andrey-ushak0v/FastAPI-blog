@@ -1,6 +1,5 @@
 """здесь хранится бизнес-логика и в обработчики она берется отсюда"""
 
-from ast import Delete
 from typing import List, Optional
 
 from base import get_session
@@ -12,7 +11,7 @@ from tables import Post
 
 
 class PostService:
-    def __init__(self, session: Session=Depends(get_session)):
+    def __init__(self, session: Session = Depends(get_session)):
         self.session = session
 
     def _get_one(self, post_id: int) -> Post:
@@ -26,7 +25,7 @@ class PostService:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
         return post
 
-    def get_list(self, kind: Optional[PostKind]=None) -> List[Post]:
+    def get_list(self, kind: Optional[PostKind] = None) -> List[Post]:
         query = self.session.query(Post)
         if kind:
             query = query.filter_by(kind=kind)
@@ -53,5 +52,3 @@ class PostService:
         post = self._get_one(post_id)
         self.session.delete(post)
         self.session.commit()
-
-
