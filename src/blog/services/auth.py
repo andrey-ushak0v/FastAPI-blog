@@ -1,23 +1,31 @@
 
 from datetime import datetime, timedelta
-from pydantic import ValidationError
-from jose import jwt, JWTError
-from passlib.hash import bcrypt
 
-from models.auth import User, Token
 import tables
+from base import get_session
+from fastapi import Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordBearer
+from jose import JWTError, jwt
+from models.auth import Token, User, UserCreate
+from passlib.hash import bcrypt
+from pydantic import ValidationError
 from settings import settings
+from sqlalchemy.orm import Session
 
-from fastapi import HTTPException, status
+oauth2_sheme = OAuth2PasswordBearer(tokenUrl='/auth/sign-in')
+
+
+def get_current_user(token: str = Depends(oauth2_sheme)) -> User:
+    return AuthService.validate_token(token)
 
 
 class AuthService:
     @classmethod
-    def verify_password(cls, plain_password: str, hashed_pssword: str) -> bool:
-        return bcrypt.verify(plain_password, hashed_pssword)
+    def verify_password(cls, plain_password: str, hashed_password: str) -> bool:
+        return bcrypt.verify(plain_password, hashed_password)
 
     @classmethod
-    def hadh_password(cls, password: str) -> str:
+    def hash_password(cls, password: str) -> str:
         return bcrypt.hash(password)
 
     @classmethod
@@ -49,8 +57,8 @@ class AuthService:
 
     @classmethod
     def create_token(cls, user: tables.User) -> Token:
-        user_data = User.from_orm(user)
-        now = datetime.now
+        user_data = User.from_orm(user)             # проверить  user
+        now = datetime.utcnow()
 
         payload = {
              'iat': now,
@@ -66,3 +74,42 @@ class AuthService:
         )
 
         return Token(access_token=token)
+
+    def __init__(self, session: Session = Depends(get_session)):
+        self.session = session
+
+    def register_new_user(self, user_data: UserCreate) -> Token:
+        user = tables.User(
+            email=user_data.email,
+            username=user_data.username,
+            password_hash=self.hash_password(user_data.password),
+        )
+
+        self.session.add(user)
+        self.session.commit()
+
+        return self.create_token(user)
+
+    def authenticate_user(self, username: str, password: str) -> Token:
+        exception = HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail='username or password is not correct',
+            headers={
+                'WWW-authenticate': 'Bearer'
+            },
+        )
+
+        user = (
+            self.session
+            .query(tables.User)
+            .filter(tables.User.username == username)
+            .first()
+        )
+
+        if not user:
+            raise exception
+
+        if not self.verify_password(password, user.password_hash):
+            raise exception
+
+        return self.create_token(user)
