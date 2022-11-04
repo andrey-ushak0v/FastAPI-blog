@@ -14,41 +14,56 @@ class PostService:
     def __init__(self, session: Session = Depends(get_session)):
         self.session = session
 
-    def _get_one(self, post_id: int) -> Post:
+    def _get_one(self, user_id: int, post_id: int) -> Post:
         post = (
             self.session
             .query(Post)
-            .filter_by(id=post_id)
+            .filter_by(id=post_id, user_id=user_id)
             .first()
         )
         if not post:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
         return post
 
-    def get_list(self, kind: Optional[PostKind] = None) -> List[Post]:
-        query = self.session.query(Post)
+    def get_list(
+        self,
+        user_id: int,
+        kind: Optional[PostKind] = None,
+            ) -> List[Post]:
+        query = (
+            self.session.query(Post)
+            .filter_by(user_id=user_id)
+            )
         if kind:
             query = query.filter_by(kind=kind)
         posts = query.all()
         return posts
 
-    def get_one(self, post_id: int) -> Post:
-        return self._get_one(post_id)
+    def get_one(self, user_id: int, post_id: int) -> Post:
+        return self._get_one(user_id, post_id)
 
-    def create(self, post_data: PostCreate) -> Post:
-        post = Post(**post_data.dict())
+    def create(self, user_id: int, post_data: PostCreate) -> Post:
+        post = Post(
+            **post_data.dict(),
+            user_id=user_id,
+                )
         self.session.add(post)
         self.session.commit()
         return post
 
-    def update(self, post_id: int, post_data: Post_update) -> Post:
-        post = self._get_one(post_id)
+    def update(
+        self,
+        user_id: int,
+        post_id: int,
+        post_data: Post_update,
+            ) -> Post:
+        post = self._get_one(user_id, post_id)
         for field, value in post_data:
             setattr(post, field, value)
         self.session.commit()
         return post
 
-    def delete(self, post_id: int):
-        post = self._get_one(post_id)
+    def delete(self, user_id: int, post_id: int):
+        post = self._get_one(user_id, post_id)
         self.session.delete(post)
         self.session.commit()

@@ -21,7 +21,9 @@ def get_current_user(token: str = Depends(oauth2_sheme)) -> User:
 
 class AuthService:
     @classmethod
-    def verify_password(cls, plain_password: str, hashed_password: str) -> bool:
+    def verify_password(
+        cls, plain_password: str, hashed_password: str
+            ) -> bool:
         return bcrypt.verify(plain_password, hashed_password)
 
     @classmethod
