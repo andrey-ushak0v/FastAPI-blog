@@ -42,6 +42,22 @@ class PostService:
     def get_one(self, user_id: int, post_id: int) -> Post:
         return self._get_one(user_id, post_id)
 
+    def create_many(
+        self,
+        user_id: int,
+        posts_data: list[PostCreate],
+            ) -> list[Post]:
+        posts = [
+            Post(
+                **post_data.dict(),
+                user_id=user_id,
+            )
+            for post_data in posts_data
+        ]
+        self.session.add_all(posts)
+        self.session.commit()
+        return posts
+
     def create(self, user_id: int, post_data: PostCreate) -> Post:
         post = Post(
             **post_data.dict(),
