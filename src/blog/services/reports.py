@@ -1,10 +1,11 @@
+import csv
 from io import StringIO
 from typing import Any
-import csv
+
 from fastapi import Depends
+from models.posts import Post, PostCreate
 
 from services.posts import PostService
-from models.posts import PostCreate, Post
 
 
 class ReportServce:
@@ -22,6 +23,7 @@ class ReportServce:
         )
 
         posts = []
+        next(reader)
         for item in reader:
             post_data = PostCreate.parse_obj(item)
             if post_data.text == '':
@@ -48,11 +50,9 @@ class ReportServce:
         posts = self.post_service.get_list(user_id)
 
         writer.writeheader()
-        for post in posts: 
+        for post in posts:
             post_data = Post.from_orm(post)
             writer.writerow(post_data.dict())
 
         output.seek(0)
         return output
-
-
